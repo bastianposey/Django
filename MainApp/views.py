@@ -1,34 +1,36 @@
 from django.shortcuts import render, redirect
-
 from MainApp.forms import TopicForm, EntryForm
-
 from .models import Topic, Entry
+from django.contrib.auth.decorators import login_required
+from django.http import Http404
 
 # Create your views here.
 def index(request):
     return render(request, 'MainApp/index.html')
 
 
-
+@login_required
 def topics(request):
-    topics = Topic.objects.order_by('date_added')
+    topics = Topic.objects.filter(owner=request.user).order_by('date_added')
 
     context = {'topics': topics}
 
     return render(request, 'MainApp/topics.html', context)
 
 
-
+@login_required
 def topic(request,topic_id):
     topic = Topic.objects.get(id=topic_id)
-
+    if topic.owner != request.user:
+        raise Http404
+        
     entries = topic.entry_set.all()
 
     context = {'topic': topic, 'entries': entries}
 
     return render(request, 'MainApp/topic.html', context)
 
-
+@login_required
 def new_topic(request):
     if request.method != 'POST':
         form = TopicForm()
@@ -45,7 +47,7 @@ def new_topic(request):
 
     return render(request, 'MainApp/new_topic.html', context)
 
-
+@login_required
 def new_entry(request, topic_id):
     topic = Topic.objects.get(id=topic_id)
 
@@ -66,6 +68,7 @@ def new_entry(request, topic_id):
 
     return render(request, 'MainApp/new_entry.html', context)
 
+@login_required
 def edit_entry(request, entry_id):
     '''Edit an existing entry.'''
     entry = Entry.objects.get(id=entry_id)
