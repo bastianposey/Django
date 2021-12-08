@@ -38,6 +38,8 @@ def new_topic(request):
         form = TopicForm(data=request.POST)
 
         if form.is_valid():
+            new_topic = form.save(commit=False)
+            new_topic.owner = request.user
             form.save()
         
             return redirect('MainApp:topics')
@@ -73,6 +75,9 @@ def edit_entry(request, entry_id):
     '''Edit an existing entry.'''
     entry = Entry.objects.get(id=entry_id)
     topic = entry.topic
+
+    if topic.owner != request.user:
+        raise Http404
 
     if request.method != 'POST':
         form = EntryForm(instance=entry)
